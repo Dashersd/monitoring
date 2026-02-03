@@ -1,10 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import StatCard from '../../components/dashboard/StatCard';
 import { Users, FileText, CheckCircle, Clock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import api from '../../services/api';
 
 const AdminDashboard = () => {
-    // Mock Data
+    const [stats, setStats] = useState({
+        totalTeachers: 0,
+        pendingApprovals: 0,
+        totalCredits: 0,
+        activeReports: 0
+    });
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const response = await api.get('/activities/stats');
+                if (response.data.status === 'success') {
+                    setStats(response.data.data);
+                }
+            } catch (error) {
+                console.error("Failed to load stats", error);
+            }
+        };
+        fetchStats();
+    }, []);
+
+    // Mock Data for charts (To be replaced with real aggregation endpoint later)
     const data = [
         { name: 'Jan', credits: 4000 },
         { name: 'Feb', credits: 3000 },
@@ -25,31 +47,31 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                     title="Total Teachers"
-                    value="1,248"
+                    value={stats.totalTeachers}
                     icon={Users}
-                    trend="up"
-                    trendValue="+12%"
+                    trend="neutral"
+                    trendValue="-"
                     color="primary"
                 />
                 <StatCard
                     title="Pending Approvals"
-                    value="45"
+                    value={stats.pendingApprovals}
                     icon={Clock}
-                    trend="down"
-                    trendValue="-5%"
+                    trend="up"
+                    trendValue="Active"
                     color="warning"
                 />
                 <StatCard
                     title="Credits Awarded"
-                    value="12.5k"
+                    value={stats.totalCredits}
                     icon={CheckCircle}
                     trend="up"
-                    trendValue="+8%"
+                    trendValue="Total"
                     color="secondary"
                 />
                 <StatCard
                     title="Active Reports"
-                    value="24"
+                    value={stats.activeReports}
                     icon={FileText}
                     trend="neutral"
                     trendValue="0%"
@@ -85,6 +107,7 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
+            {/* Recent Activities Section - Could be duplicated from ApproveActivities or kept separate */}
             <div className="card">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-slate-900">Recent Activities</h3>
@@ -94,37 +117,15 @@ const AdminDashboard = () => {
                     <table className="min-w-full divide-y divide-slate-200">
                         <thead>
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Teacher</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Activity</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-slate-200">
-                            {[1, 2, 3, 4].map((i) => (
-                                <tr key={i}>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex items-center">
-                                            <div className="flex-shrink-0 h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold">JD</div>
-                                            <div className="ml-4">
-                                                <div className="text-sm font-medium text-slate-900">John Doe</div>
-                                                <div className="text-sm text-slate-500">Science Dept</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">Brigada Eskwela Participation</td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">Oct 24, 2023</td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                            Pending
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 cursor-pointer hover:underline">
-                                        Review
-                                    </td>
-                                </tr>
-                            ))}
+                            <tr>
+                                <td className="px-6 py-4 text-sm text-slate-500">Feature coming soon in this view...</td>
+                                <td className="px-6 py-4"></td>
+                            </tr>
                         </tbody>
                     </table>
                 </div>

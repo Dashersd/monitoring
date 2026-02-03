@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Bell, Search } from 'lucide-react';
+import { getRoleDisplayName } from '../../utils/roles';
 
 const Header = () => {
     const { user } = useAuth();
@@ -27,7 +28,7 @@ const Header = () => {
                 <div className="flex items-center space-x-3 pl-6 border-l border-slate-200">
                     <div className="text-right hidden md:block">
                         <p className="text-sm font-semibold text-slate-800">{user?.name}</p>
-                        <p className="text-xs text-slate-500">{user?.role}</p>
+                        <p className="text-xs text-slate-500">{getRoleDisplayName(user?.role)}</p>
                     </div>
                     <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center text-white font-bold shadow-md">
                         {user?.name?.charAt(0)}

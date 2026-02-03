@@ -19,6 +19,7 @@ import Reports from '../pages/shared/Reports';
 
 // Admin Pages
 import TeacherManagement from '../pages/admin/TeacherManagement';
+import TeacherDetails from '../pages/admin/TeacherDetails';
 
 const AppRoutes = () => {
     return (
@@ -47,6 +48,7 @@ const AppRoutes = () => {
                     {/* Admin Only Routes */}
                     <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]} />}>
                         <Route path="/teachers" element={<TeacherManagement />} />
+                        <Route path="/teachers/:id" element={<TeacherDetails />} />
                     </Route>
 
                 </Route>

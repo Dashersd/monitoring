@@ -1,10 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Upload, X, Check } from 'lucide-react';
+import api from '../../services/api';
 
 const SubmitActivity = () => {
+    // Form state
+    const [title, setTitle] = useState('');
+    const [categoryId, setCategoryId] = useState('');
+    const [date, setDate] = useState('');
+    const [duration, setDuration] = useState('');
+    const [description, setDescription] = useState('');
     const [files, setFiles] = useState([]);
+
+    // UI state
+    const [categories, setCategories] = useState([]);
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await api.get('/system/reference-data');
+                if (response.data.status === 'success') {
+                    setCategories(response.data.data.categories);
+                }
+            } catch (error) {
+                console.error("Failed to load categories", error);
+            }
+        };
+        fetchCategories();
+    }, []);
 
     const handleDrop = (e) => {
         e.preventDefault();
@@ -21,17 +46,40 @@ const SubmitActivity = () => {
         setFiles(files.filter((_, i) => i !== index));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
-        // Simulate API call
-        setTimeout(() => {
+        setError('');
+        setSuccess(false);
+
+        try {
+            const payload = {
+                title,
+                description,
+                date,
+                durationHours: duration,
+                categoryId
+            };
+
+            const response = await api.post('/activities/submit', payload);
+
+            if (response.data.status === 'success') {
+                setSuccess(true);
+                // Reset form
+                setTitle('');
+                setCategoryId('');
+                setDate('');
+                setDuration('');
+                setDescription('');
+                setFiles([]);
+
+                setTimeout(() => setSuccess(false), 3000);
+            }
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to submit activity');
+        } finally {
             setSubmitting(false);
-            setSuccess(true);
-            setFiles([]);
-            e.target.reset();
-            setTimeout(() => setSuccess(false), 3000);
-        }, 1500);
+        }
     };
 
     return (
@@ -40,6 +88,12 @@ const SubmitActivity = () => {
                 <h1 className="text-2xl font-bold text-slate-900">Submit Activity</h1>
                 <p className="text-slate-500">Submit your service credit request with supporting documents.</p>
             </div>
+
+            {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center text-red-700 animate-fade-in">
+                    <p className="font-bold">{error}</p>
+                </div>
+            )}
 
             {success && (
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center text-green-700 animate-fade-in">
@@ -58,16 +112,27 @@ const SubmitActivity = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Activity Title</label>
-                            <input type="text" required className="input-field" placeholder="e.g. Brigada Eskwela" />
+                            <input
+                                type="text"
+                                required
+                                className="input-field"
+                                placeholder="e.g. Brigada Eskwela"
+                                value={title}
+                                onChange={(e) => setTitle(e.target.value)}
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
-                            <select className="input-field" required>
+                            <select
+                                className="input-field"
+                                required
+                                value={categoryId}
+                                onChange={(e) => setCategoryId(e.target.value)}
+                            >
                                 <option value="">Select Category</option>
-                                <option value="training">Training / Seminar</option>
-                                <option value="event">School Event</option>
-                                <option value="committee">Committee Work</option>
-                                <option value="other">Other</option>
+                                {categories.map(cat => (
+                                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -75,17 +140,37 @@ const SubmitActivity = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
-                            <input type="date" required className="input-field" />
+                            <input
+                                type="date"
+                                required
+                                className="input-field"
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                            />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-slate-700 mb-1">Duration (Hours)</label>
-                            <input type="number" min="1" step="0.5" required className="input-field" placeholder="0" />
+                            <input
+                                type="number"
+                                min="1"
+                                step="0.5"
+                                required
+                                className="input-field"
+                                placeholder="0"
+                                value={duration}
+                                onChange={(e) => setDuration(e.target.value)}
+                            />
                         </div>
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
-                        <textarea className="input-field h-32 resize-none" placeholder="Describe the activity and your role..."></textarea>
+                        <textarea
+                            className="input-field h-32 resize-none"
+                            placeholder="Describe the activity and your role..."
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                        ></textarea>
                     </div>
                 </div>
 
@@ -136,7 +221,7 @@ const SubmitActivity = () => {
                 </div>
 
                 <div className="flex justify-end space-x-4">
-                    <button type="button" className="btn-secondary">Cancel</button>
+                    <button type="button" className="btn-secondary" onClick={() => window.history.back()}>Cancel</button>
                     <button type="submit" disabled={submitting} className="btn-primary flex items-center">
                         {submitting ? 'Submitting...' : 'Submit Request'}
                     </button>

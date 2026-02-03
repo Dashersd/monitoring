@@ -136,19 +136,8 @@ const Login = () => {
                                 <div className="w-full border-t border-slate-200" />
                             </div>
                             <div className="relative flex justify-center text-sm">
-                                <span className="px-2 bg-white text-slate-500">Demo Login Hints</span>
+                                <span className="px-2 bg-white text-slate-500">Contact Admin for Access</span>
                             </div>
-                        </div>
-                        <div className="mt-6 grid grid-cols-3 gap-3">
-                            <button onClick={() => { setEmail('admin@school.edu'); setPassword('123456'); }} className="text-xs text-center p-2 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors">
-                                Admin
-                            </button>
-                            <button onClick={() => { setEmail('supervisor@school.edu'); setPassword('123456'); }} className="text-xs text-center p-2 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors">
-                                Supervisor
-                            </button>
-                            <button onClick={() => { setEmail('teacher@school.edu'); setPassword('123456'); }} className="text-xs text-center p-2 rounded bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors">
-                                Teacher
-                            </button>
                         </div>
                     </div>
                 </div>

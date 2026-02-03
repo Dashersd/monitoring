@@ -19,28 +19,25 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        // In a real app, this would hit the API
-        // const response = await api.post('/auth/login', { email, password });
-        // const { token, user } = response.data;
+        try {
+            const response = await api.post('/auth/login', { email, password });
 
-        // MOCK LOGIN FOR DEMO PURPOSES
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate delay
+            if (response.data.status === 'success') {
+                const { token, user } = response.data;
 
-        let mockUser = null;
-        let mockToken = 'mock-jwt-token';
-
-        if (email.includes('admin')) {
-            mockUser = { id: 1, name: 'Admin User', email, role: 'Administrator' };
-        } else if (email.includes('supervisor')) {
-            mockUser = { id: 2, name: 'Supervisor User', email, role: 'Supervisor' };
-        } else {
-            mockUser = { id: 3, name: 'Teacher User', email, role: 'Teacher' };
+                // Map backend roles to frontend constants if necessary, or just ensure consistency
+                // For now, we utilize the backend role directly.
+                localStorage.setItem('token', token);
+                localStorage.setItem('user', JSON.stringify(user));
+                setUser(user);
+                return user;
+            } else {
+                throw new Error(response.data.message || 'Login failed');
+            }
+        } catch (error) {
+            console.error("Login error:", error);
+            throw error; // Propagate error to the component
         }
-
-        localStorage.setItem('token', mockToken);
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        setUser(mockUser);
-        return mockUser;
     };
 
     const logout = () => {
