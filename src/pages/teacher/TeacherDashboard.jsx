@@ -52,7 +52,7 @@ const TeacherDashboard = () => {
                     <h3 className="text-lg font-bold text-slate-900 mb-4">Credit Accumulation Over Time</h3>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data}>
+                            <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                                 <defs>
                                     <linearGradient id="colorCredits" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
@@ -60,7 +60,7 @@ const TeacherDashboard = () => {
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                                <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="#64748b" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="#64748b" dy={10} />
                                 <YAxis axisLine={false} tickLine={false} stroke="#64748b" />
                                 <Tooltip />
                                 <Area type="monotone" dataKey="credits" stroke="#3b82f6" fillOpacity={1} fill="url(#colorCredits)" />

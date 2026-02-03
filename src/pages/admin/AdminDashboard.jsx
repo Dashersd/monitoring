@@ -61,9 +61,9 @@ const AdminDashboard = () => {
                 <div className="card h-96">
                     <h3 className="text-lg font-bold text-slate-900 mb-4">Service Credits Trend (Yearly)</h3>
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={data}>
+                        <LineChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="#64748b" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="#64748b" dy={10} />
                             <YAxis axisLine={false} tickLine={false} stroke="#64748b" />
                             <Tooltip />
                             <Line type="monotone" dataKey="credits" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} />
@@ -74,9 +74,9 @@ const AdminDashboard = () => {
                 <div className="card h-96">
                     <h3 className="text-lg font-bold text-slate-900 mb-4">Department Performance</h3>
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data}>
+                        <BarChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="#64748b" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="#64748b" dy={10} />
                             <YAxis axisLine={false} tickLine={false} stroke="#64748b" />
                             <Tooltip cursor={{ fill: '#f1f5f9' }} />
                             <Bar dataKey="credits" fill="#8b5cf6" radius={[4, 4, 0, 0]} />

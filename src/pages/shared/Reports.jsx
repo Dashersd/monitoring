@@ -43,9 +43,9 @@ const Reports = () => {
                 <div className="card h-96">
                     <h3 className="text-lg font-bold text-slate-900 mb-4">Activity Status by Department</h3>
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={departmentData}>
+                        <BarChart data={departmentData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                            <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="#64748b" />
+                            <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="#64748b" dy={10} />
                             <YAxis axisLine={false} tickLine={false} stroke="#64748b" />
                             <Tooltip cursor={{ fill: '#f1f5f9' }} />
                             <Legend />
