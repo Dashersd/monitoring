@@ -12,17 +12,21 @@ const prisma = new PrismaClient();
 const authRoutes = require('./src/routes/authRoutes');
 const activityRoutes = require('./src/routes/activityRoutes');
 const systemRoutes = require('./src/routes/systemRoutes');
+const notificationRoutes = require('./src/routes/notificationRoutes');
 
 // Middleware
 app.use(helmet());
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/system', systemRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Test Database Connection Route
 app.get('/api/health', async (req, res) => {

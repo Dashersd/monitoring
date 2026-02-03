@@ -5,13 +5,7 @@ const prisma = new PrismaClient();
 const submitActivity = async (req, res) => {
     try {
         const { title, description, date, durationHours, categoryId } = req.body;
-        const teacherId = req.user.id; // From authMiddleware
-
-        // Find or create category (for simplicity, we assume category name is passed or partial logic)
-        // Ideally frontend sends categoryId, but if it sends name, we need to handle it.
-        // Let's assume frontend sends categoryId. If not, we might need a lookup.
-        // For this iteration, let's assume simple string or ID. 
-        // If category is an ID:
+        const teacherId = req.user.id;
 
         // Ensure teacher profile exists
         const teacherProfile = await prisma.teacherProfile.findUnique({
@@ -22,17 +16,57 @@ const submitActivity = async (req, res) => {
             return res.status(400).json({ status: 'error', message: 'Teacher profile incomplete' });
         }
 
-        const activity = await prisma.activity.create({
-            data: {
-                title,
-                description,
-                date: new Date(date),
-                durationHours: parseFloat(durationHours),
-                status: 'PENDING',
-                teacherId: teacherProfile.id,
-                categoryId: parseInt(categoryId), // Assuming categoryId is sent
+        const activity = await prisma.$transaction(async (prisma) => {
+            const act = await prisma.activity.create({
+                data: {
+                    title,
+                    description,
+                    date: new Date(date),
+                    durationHours: parseFloat(durationHours),
+                    status: 'PENDING',
+                    teacherId: teacherProfile.id,
+                    categoryId: parseInt(categoryId),
+                }
+            });
+
+            // Handle Attachments if any
+            if (req.files && req.files.length > 0) {
+                const attachments = req.files.map(file => ({
+                    filePath: file.path, // In real app, this would be a URL
+                    fileType: file.mimetype,
+                    activityId: act.id
+                }));
+
+                await prisma.attachment.createMany({
+                    data: attachments
+                });
             }
+
+            return act;
         });
+
+        // Notify Admins and Supervisors
+        try {
+            const admins = await prisma.user.findMany({
+                where: {
+                    role: { in: ['ADMIN', 'SUPERVISOR'] }
+                }
+            });
+
+            const teacherName = req.user.name || 'A teacher';
+            const adminNotifications = admins.map(admin => ({
+                userId: admin.id,
+                message: `${teacherName} submitted a new activity: "${title}".`
+            }));
+
+            if (adminNotifications.length > 0) {
+                await prisma.notification.createMany({
+                    data: adminNotifications
+                });
+            }
+        } catch (notifyErr) {
+            console.error("Failed to notify admins:", notifyErr);
+        }
 
         res.status(201).json({ status: 'success', data: activity });
     } catch (error) {
@@ -81,7 +115,8 @@ const getAllActivities = async (req, res) => {
                         department: true
                     }
                 },
-                category: true
+                category: true,
+                attachments: true
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -99,9 +134,19 @@ const updateActivityStatus = async (req, res) => {
         const { status, remarks } = req.body;
         const approverId = req.user.id;
 
+        // Update status
         const activity = await prisma.activity.update({
             where: { id: parseInt(id) },
-            data: { status }
+            data: { status },
+            include: { teacher: { include: { user: true } } }
+        });
+
+        // Create Notification for Teacher
+        await prisma.notification.create({
+            data: {
+                message: `Your activity "${activity.title}" has been ${status.toLowerCase()}.${remarks ? ' Remarks: ' + remarks : ''}`,
+                userId: activity.teacher.userId
+            }
         });
 
         // Record approval/rejection
@@ -216,11 +261,87 @@ const getTeacherStats = async (req, res) => {
     }
 };
 
+// Get aggregated report data for Admin/Supervisor
+const getReportData = async (req, res) => {
+    try {
+        // 1. Activity Status by Department
+        const activities = await prisma.activity.findMany({
+            include: {
+                teacher: { include: { department: true } }
+            }
+        });
+
+        const deptMap = {};
+        activities.forEach(a => {
+            const deptName = a.teacher?.department?.name || 'Unknown';
+            if (!deptMap[deptName]) {
+                deptMap[deptName] = { name: deptName, approved: 0, pending: 0, rejected: 0 };
+            }
+            if (a.status === 'APPROVED') deptMap[deptName].approved++;
+            else if (a.status === 'PENDING') deptMap[deptName].pending++;
+            else if (a.status === 'REJECTED') deptMap[deptName].rejected++;
+        });
+        const departmentData = Object.values(deptMap);
+
+        // 2. Credits by Category
+        const catCredits = await prisma.activity.groupBy({
+            by: ['categoryId'],
+            where: { status: 'APPROVED' },
+            _sum: { durationHours: true }
+        });
+
+        const categories = await prisma.serviceCategory.findMany();
+        const pieData = categories.map(cat => {
+            const sum = catCredits.find(c => c.categoryId === cat.id)?._sum?.durationHours || 0;
+            return { name: cat.name, value: sum };
+        }).filter(item => item.value > 0);
+
+        // 3. Top Performing Teachers
+        const teacherCredits = await prisma.activity.groupBy({
+            by: ['teacherId'],
+            where: { status: 'APPROVED' },
+            _sum: { durationHours: true },
+            orderBy: { _sum: { durationHours: 'desc' } },
+            take: 5
+        });
+
+        const topTeachers = await Promise.all(teacherCredits.map(async (tc, index) => {
+            const profile = await prisma.teacherProfile.findUnique({
+                where: { id: tc.teacherId },
+                include: {
+                    user: { select: { name: true } },
+                    department: true
+                }
+            });
+            return {
+                rank: index + 1,
+                name: profile?.user?.name || 'Unknown',
+                department: profile?.department?.name || 'N/A',
+                credits: tc._sum.durationHours
+            };
+        }));
+
+        res.json({
+            status: 'success',
+            data: {
+                departmentData,
+                pieData,
+                topTeachers
+            }
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 'error', message: 'Failed to fetch report data' });
+    }
+};
+
 module.exports = {
     submitActivity,
     getMyActivities,
     getAllActivities,
     updateActivityStatus,
     getDashboardStats,
-    getTeacherStats
+    getTeacherStats,
+    getReportData
 };

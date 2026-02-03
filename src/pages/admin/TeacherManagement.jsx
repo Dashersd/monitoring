@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Search, Plus, MoreHorizontal, Mail, Phone, X, Edit, UserX, UserCheck, Key, FileText, BarChart2 } from 'lucide-react';
+import { Search, Plus, MoreHorizontal, Mail, Phone, X, Edit, UserX, UserCheck, Key, FileText, BarChart2, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
@@ -118,6 +118,14 @@ const TeacherManagement = () => {
         }
     };
 
+    const [searchTerm, setSearchTerm] = useState('');
+
+    const filteredTeachers = teachers.filter(t =>
+        t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.id.toString().includes(searchTerm)
+    );
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsSubmitting(true);
@@ -138,6 +146,23 @@ const TeacherManagement = () => {
         }
     };
 
+    const handleExport = async () => {
+        try {
+            const response = await api.get('/system/teachers/export', {
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'Teachers_Performance_Report.xlsx');
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (error) {
+            alert("Failed to export report");
+        }
+    };
+
     return (
         <div className="space-y-6 animate-fade-in relative min-h-screen">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -145,20 +170,35 @@ const TeacherManagement = () => {
                     <h1 className="text-2xl font-bold text-slate-900">Teacher Management</h1>
                     <p className="text-slate-500">Manage teacher accounts and departments.</p>
                 </div>
-                <button
-                    onClick={handleAddClick}
-                    className="btn-primary flex items-center space-x-2"
-                >
-                    <Plus size={18} />
-                    <span>Add Teacher</span>
-                </button>
+                <div className="flex gap-3">
+                    <button
+                        onClick={handleExport}
+                        className="btn-secondary flex items-center space-x-2"
+                    >
+                        <Download size={18} />
+                        <span>Export Report</span>
+                    </button>
+                    <button
+                        onClick={handleAddClick}
+                        className="btn-primary flex items-center space-x-2"
+                    >
+                        <Plus size={18} />
+                        <span>Add Teacher</span>
+                    </button>
+                </div>
             </div>
 
             <div className="card">
                 <div className="flex flex-col md:flex-row gap-4 mb-6">
                     <div className="relative flex-1">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
-                        <input type="text" placeholder="Search by name or ID..." className="input-field pl-10" />
+                        <input
+                            type="text"
+                            placeholder="Search by name, email, or ID..."
+                            className="input-field pl-10"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
                     </div>
                 </div>
 
@@ -177,7 +217,7 @@ const TeacherManagement = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
-                                {teachers.map((teacher) => (
+                                {filteredTeachers.map((teacher) => (
                                     <tr key={teacher.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
@@ -259,9 +299,9 @@ const TeacherManagement = () => {
                                         </td>
                                     </tr>
                                 ))}
-                                {teachers.length === 0 && (
+                                {filteredTeachers.length === 0 && (
                                     <tr>
-                                        <td colSpan="5" className="text-center py-10 text-slate-500">No teachers found.</td>
+                                        <td colSpan="5" className="text-center py-10 text-slate-500">No teachers found matching your search.</td>
                                     </tr>
                                 )}
                             </tbody>

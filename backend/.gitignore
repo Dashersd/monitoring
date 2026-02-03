@@ -3,3 +3,6 @@ node_modules
 .env
 
 /generated/prisma
+/uploads
+list_users.js
+seed_supervisor.js

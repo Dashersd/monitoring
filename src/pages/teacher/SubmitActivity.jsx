@@ -53,15 +53,22 @@ const SubmitActivity = () => {
         setSuccess(false);
 
         try {
-            const payload = {
-                title,
-                description,
-                date,
-                durationHours: duration,
-                categoryId
-            };
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('description', description);
+            formData.append('date', date);
+            formData.append('durationHours', duration);
+            formData.append('categoryId', categoryId);
 
-            const response = await api.post('/activities/submit', payload);
+            files.forEach((file) => {
+                formData.append('files', file);
+            });
+
+            const response = await api.post('/activities/submit', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
 
             if (response.data.status === 'success') {
                 setSuccess(true);

@@ -182,11 +182,59 @@ const resetPassword = async (req, res) => {
     }
 };
 
+const XLSX = require('xlsx');
+
+// Export Teachers to Excel
+const exportTeachers = async (req, res) => {
+    try {
+        const teachers = await prisma.user.findMany({
+            where: { role: 'TEACHER' },
+            include: {
+                teacherProfile: {
+                    include: {
+                        department: true,
+                        activities: {
+                            where: { status: 'APPROVED' }
+                        }
+                    }
+                }
+            }
+        });
+
+        const data = teachers.map(t => {
+            const approvedHours = t.teacherProfile?.activities.reduce((sum, act) => sum + act.durationHours, 0) || 0;
+            return {
+                'Teacher Name': t.name,
+                'Email': t.email,
+                'Department': t.teacherProfile?.department?.name || 'N/A',
+                'Status': t.isActive ? 'Active' : 'Inactive',
+                'Total Approved Credits': approvedHours,
+                'Member Since': new Date(t.createdAt).toLocaleDateString()
+            };
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(data);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Teachers");
+
+        const buffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
+
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename=Teachers_Report.xlsx');
+        res.send(buffer);
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ status: 'error', message: 'Failed to export data' });
+    }
+};
+
 module.exports = {
     getAllTeachers,
     seedData,
     getReferenceData,
     createTeacher,
     updateTeacher,
-    resetPassword
+    resetPassword,
+    exportTeachers
 };
