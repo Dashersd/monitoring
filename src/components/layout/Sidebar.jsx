@@ -10,11 +10,12 @@ import {
     BarChart2,
     User,
     LogOut,
-    School
+    School,
+    X
 } from 'lucide-react';
 import clsx from 'clsx';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
     const { user, logout } = useAuth();
 
     const navItems = [
@@ -30,44 +31,65 @@ const Sidebar = () => {
     const filteredItems = navItems.filter(item => item.roles.includes(user?.role));
 
     return (
-        <div className="h-screen w-64 bg-slate-900 text-white flex flex-col fixed left-0 top-0 shadow-lg z-50">
-            <div className="p-6 flex items-center space-x-3 border-b border-slate-800">
-                <div className="bg-primary-500 p-2 rounded-lg">
-                    <School size={24} className="text-white" />
-                </div>
-                <span className="text-lg font-bold tracking-tight">EduCredit</span>
-            </div>
+        <>
+            {/* Mobile Backdrop */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-black/50 z-40 md:hidden transition-opacity"
+                    onClick={onClose}
+                />
+            )}
 
-            <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-                {filteredItems.map((item) => (
-                    <NavLink
-                        key={item.path}
-                        to={item.path}
-                        className={({ isActive }) =>
-                            clsx(
-                                "flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group",
-                                isActive
-                                    ? "bg-primary-600 text-white shadow-md shadow-primary-900/20"
-                                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
-                            )
-                        }
+            <aside className={clsx(
+                "h-screen w-64 bg-slate-900 text-white flex flex-col fixed left-0 top-0 shadow-lg z-50 transition-transform duration-300 ease-in-out",
+                isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+            )}>
+                <div className="p-6 flex items-center space-x-3 border-b border-slate-800">
+                    <div className="bg-primary-500 p-2 rounded-lg">
+                        <School size={24} className="text-white" />
+                    </div>
+                    <span className="text-lg font-bold tracking-tight">EduCredit</span>
+                    {/* Close button for mobile */}
+                    <button
+                        onClick={onClose}
+                        className="ml-auto md:hidden text-slate-400 hover:text-white"
                     >
-                        <item.icon size={20} />
-                        <span className="font-medium">{item.label}</span>
-                    </NavLink>
-                ))}
-            </nav>
+                        <X size={20} />
+                    </button>
+                </div>
 
-            <div className="p-4 border-t border-slate-800">
-                <button
-                    onClick={logout}
-                    className="flex items-center space-x-3 px-4 py-3 w-full text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors"
-                >
-                    <LogOut size={20} />
-                    <span className="font-medium">Logout</span>
-                </button>
-            </div>
-        </div>
+                <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+                    {filteredItems.map((item) => (
+                        <NavLink
+                            key={item.path}
+                            to={item.path}
+                            onClick={() => onClose()} // Close sidebar on navigation on mobile
+                            className={({ isActive }) =>
+                                clsx(
+                                    "flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group",
+                                    isActive
+                                        ? "bg-primary-600 text-white shadow-md shadow-primary-900/20"
+                                        : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                                )
+                            }
+                        >
+                            <item.icon size={20} />
+                            <span className="font-medium">{item.label}</span>
+                        </NavLink>
+                    ))}
+                </nav>
+
+                <div className="p-4 border-t border-slate-800">
+                    <button
+                        onClick={logout}
+                        className="flex items-center space-x-3 px-4 py-3 w-full text-slate-400 hover:text-red-400 hover:bg-slate-800 rounded-lg transition-colors"
+                    >
+                        <LogOut size={20} />
+                        <span className="font-medium">Logout</span>
+                    </button>
+                </div>
+            </aside>
+        </>
     );
 };
 

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Bell, Search, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { Bell, Search, CheckCircle, XCircle, Clock, Menu } from 'lucide-react';
 import { getRoleDisplayName } from '../../utils/roles';
 import api from '../../services/api';
 
-const Header = () => {
+const Header = ({ toggleSidebar }) => {
     const { user } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [showNotifications, setShowNotifications] = useState(false);
@@ -62,9 +62,16 @@ const Header = () => {
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
     return (
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-40">
-            <div className="flex items-center w-96">
-                <div className="relative w-full">
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 sticky top-0 z-40">
+            <div className="flex items-center flex-1">
+                <button
+                    onClick={toggleSidebar}
+                    className="mr-4 md:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                    <Menu size={24} />
+                </button>
+
+                <div className="relative w-full max-w-md hidden sm:block">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
                     <input
                         type="text"
@@ -125,7 +132,7 @@ const Header = () => {
                 </div>
 
                 <div className="flex items-center space-x-3 pl-6 border-l border-slate-200">
-                    <div className="text-right hidden md:block">
+                    <div className="text-right hidden lg:block">
                         <p className="text-sm font-semibold text-slate-800">{user?.name}</p>
                         <p className="text-xs text-slate-500">{getRoleDisplayName(user?.role)}</p>
                     </div>

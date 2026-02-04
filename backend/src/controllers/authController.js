@@ -86,7 +86,8 @@ const login = async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: 'Login failed' });
+        console.error("Login Error Details:", error);
+        res.status(500).json({ status: 'error', message: 'Login failed', error: error.message });
     }
 };
 
