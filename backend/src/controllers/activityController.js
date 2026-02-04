@@ -102,7 +102,7 @@ const getMyActivities = async (req, res) => {
 // Get all activities (for Admin/Supervisor)
 const getAllActivities = async (req, res) => {
     try {
-        const { status } = req.query;
+        const { status, limit } = req.query;
         const where = {};
         if (status) where.status = status;
 
@@ -118,7 +118,8 @@ const getAllActivities = async (req, res) => {
                 category: true,
                 attachments: true
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            take: limit ? parseInt(limit) : undefined
         });
 
         res.json({ status: 'success', data: activities });

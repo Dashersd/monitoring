@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import StatCard from '../../components/dashboard/StatCard';
 import { Users, FileText, CheckCircle, Clock } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
@@ -11,19 +12,30 @@ const AdminDashboard = () => {
         totalCredits: 0,
         activeReports: 0
     });
+    const [recentActivities, setRecentActivities] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchStats = async () => {
+        const fetchDashboardData = async () => {
             try {
-                const response = await api.get('/activities/stats');
-                if (response.data.status === 'success') {
-                    setStats(response.data.data);
+                const [statsRes, activitiesRes] = await Promise.all([
+                    api.get('/activities/stats'),
+                    api.get('/activities/all?limit=5')
+                ]);
+
+                if (statsRes.data.status === 'success') {
+                    setStats(statsRes.data.data);
+                }
+                if (activitiesRes.data.status === 'success') {
+                    setRecentActivities(activitiesRes.data.data);
                 }
             } catch (error) {
-                console.error("Failed to load stats", error);
+                console.error("Failed to load dashboard data", error);
+            } finally {
+                setLoading(false);
             }
         };
-        fetchStats();
+        fetchDashboardData();
     }, []);
 
     // Mock Data for charts (To be replaced with real aggregation endpoint later)
@@ -36,6 +48,15 @@ const AdminDashboard = () => {
         { name: 'Jun', credits: 2390 },
         { name: 'Jul', credits: 3490 },
     ];
+
+    const getStatusColor = (status) => {
+        switch (status) {
+            case 'APPROVED': return 'bg-green-100 text-green-800';
+            case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+            case 'REJECTED': return 'bg-red-100 text-red-800';
+            default: return 'bg-slate-100 text-slate-800';
+        }
+    };
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -107,25 +128,53 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {/* Recent Activities Section - Could be duplicated from ApproveActivities or kept separate */}
+            {/* Recent Activities Section */}
             <div className="card">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-lg font-bold text-slate-900">Recent Activities</h3>
-                    <button className="text-primary-600 font-medium text-sm hover:underline">View All</button>
+                    <Link to="/approve" className="text-primary-600 font-medium text-sm hover:underline">View All</Link>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-slate-200">
                         <thead>
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Activity</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Teacher</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-slate-200">
-                            <tr>
-                                <td className="px-6 py-4 text-sm text-slate-500">Feature coming soon in this view...</td>
-                                <td className="px-6 py-4"></td>
-                            </tr>
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="4" className="px-6 py-4 text-center text-slate-500">Loading activities...</td>
+                                </tr>
+                            ) : recentActivities.length > 0 ? (
+                                recentActivities.map((activity) => (
+                                    <tr key={activity.id} className="hover:bg-slate-50 transition-colors">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm font-medium text-slate-900">{activity.title}</div>
+                                            <div className="text-xs text-slate-500">{activity.category?.name}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="text-sm text-slate-900">{activity.teacher?.user?.name || 'Unknown'}</div>
+                                            <div className="text-xs text-slate-500">{activity.teacher?.department?.name}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                                            {new Date(activity.createdAt).toLocaleDateString()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(activity.status)}`}>
+                                                {activity.status}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="4" className="px-6 py-4 text-center text-slate-500">No recent activities found.</td>
+                                </tr>
+                            )}
                         </tbody>
                     </table>
                 </div>
