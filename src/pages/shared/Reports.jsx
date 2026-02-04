@@ -63,12 +63,12 @@ const Reports = () => {
                     <h3 className="text-lg font-bold text-slate-900 mb-4">Activity Status by Department</h3>
                     {reportData.departmentData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={reportData.departmentData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                            <BarChart data={reportData.departmentData} margin={{ top: 10, right: 10, left: 0, bottom: 35 }}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="#64748b" dy={10} />
                                 <YAxis axisLine={false} tickLine={false} stroke="#64748b" />
                                 <Tooltip cursor={{ fill: '#f1f5f9' }} />
-                                <Legend />
+                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
                                 <Bar dataKey="approved" stackId="a" fill="#3b82f6" name="Approved" />
                                 <Bar dataKey="pending" stackId="a" fill="#fbbf24" name="Pending" />
                                 <Bar dataKey="rejected" stackId="a" fill="#ef4444" name="Rejected" />
@@ -84,7 +84,7 @@ const Reports = () => {
                     <h3 className="text-lg font-bold text-slate-900 mb-4">Credits Distributed by Category</h3>
                     {reportData.pieData.length > 0 ? (
                         <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
+                            <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 20 }}>
                                 <Pie
                                     data={reportData.pieData}
                                     cx="50%"
@@ -100,7 +100,7 @@ const Reports = () => {
                                     ))}
                                 </Pie>
                                 <Tooltip formatter={(value) => [`${value} Credits`, 'Total']} />
-                                <Legend />
+                                <Legend wrapperStyle={{ paddingTop: '20px' }} />
                             </PieChart>
                         </ResponsiveContainer>
                     ) : (
