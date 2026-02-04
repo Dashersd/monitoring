@@ -399,6 +399,47 @@ const getMyStats = async (req, res) => {
             }
         });
 
+        // 4. Chart Data (Last 6 months credits)
+        // Get start date being 5 months ago (total 6 datapoints including current)
+        const d = new Date();
+        d.setMonth(d.getMonth() - 5);
+        d.setDate(1);
+        d.setHours(0, 0, 0, 0);
+
+        const activitiesForChart = await prisma.activity.findMany({
+            where: {
+                teacherId: tId,
+                status: 'APPROVED',
+                date: { gte: d }
+            },
+            select: {
+                date: true,
+                durationHours: true
+            }
+        });
+
+        const monthlyData = [];
+        for (let i = 5; i >= 0; i--) {
+            const dateIter = new Date();
+            dateIter.setMonth(dateIter.getMonth() - i);
+            const monthName = dateIter.toLocaleString('default', { month: 'short' });
+            const mon = dateIter.getMonth();
+            const year = dateIter.getFullYear();
+
+            // Sum credits for this month
+            const sum = activitiesForChart
+                .filter(a => {
+                    const ad = new Date(a.date);
+                    return ad.getMonth() === mon && ad.getFullYear() === year;
+                })
+                .reduce((acc, curr) => acc + curr.durationHours, 0);
+
+            monthlyData.push({
+                name: monthName,
+                credits: Math.round(sum * 100) / 100
+            });
+        }
+
         res.json({
             status: 'success',
             data: {
@@ -406,7 +447,8 @@ const getMyStats = async (req, res) => {
                 pendingSubmissions,
                 approvedActivities,
                 creditTrend: Math.round(creditTrend * 100) / 100,
-                approvedTrend
+                approvedTrend,
+                chartData: monthlyData
             }
         });
 

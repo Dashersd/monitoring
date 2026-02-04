@@ -1,24 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import StatCard from '../../components/dashboard/StatCard';
 import { Award, Clock, FilePlus, List } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const TeacherDashboard = () => {
+    const navigate = useNavigate();
     const [stats, setStats] = useState({
         totalCredits: 0,
         pendingSubmissions: 0,
         approvedActivities: 0,
         creditTrend: 0,
-        approvedTrend: 0
+        approvedTrend: 0,
+        chartData: []
     });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                // Determine if we need to use a relative path or rely on the proxy/base URL
-                // The api service instance (api.js) handles baseURL
                 const response = await api.get('/activities/my-stats');
                 if (response.data.status === 'success') {
                     setStats(response.data.data);
@@ -32,15 +33,6 @@ const TeacherDashboard = () => {
 
         fetchStats();
     }, []);
-
-    const data = [
-        { name: 'Sep', credits: 4 },
-        { name: 'Oct', credits: 3 },
-        { name: 'Nov', credits: 5 },
-        { name: 'Dec', credits: 2 },
-        { name: 'Jan', credits: 6 },
-        { name: 'Feb', credits: 4 },
-    ];
 
     const getTrendDisplay = (value, unit = '') => {
         if (value > 0) return { trend: 'up', trendValue: `+${value} ${unit}` };
@@ -90,7 +82,7 @@ const TeacherDashboard = () => {
                     <h3 className="text-lg font-bold text-slate-900 mb-4">Credit Accumulation Over Time</h3>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
+                            <AreaChart data={stats.chartData} margin={{ top: 10, right: 10, left: 0, bottom: 5 }}>
                                 <defs>
                                     <linearGradient id="colorCredits" x1="0" y1="0" x2="0" y2="1">
                                         <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
@@ -100,8 +92,16 @@ const TeacherDashboard = () => {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                                 <XAxis dataKey="name" axisLine={false} tickLine={false} stroke="#64748b" dy={10} />
                                 <YAxis axisLine={false} tickLine={false} stroke="#64748b" />
-                                <Tooltip />
-                                <Area type="monotone" dataKey="credits" stroke="#3b82f6" fillOpacity={1} fill="url(#colorCredits)" />
+                                <Tooltip
+                                    contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="credits"
+                                    stroke="#3b82f6"
+                                    fillOpacity={1}
+                                    fill="url(#colorCredits)"
+                                />
                             </AreaChart>
                         </ResponsiveContainer>
                     </div>
@@ -110,7 +110,10 @@ const TeacherDashboard = () => {
                 <div className="card">
                     <h3 className="text-lg font-bold text-slate-900 mb-4">Quick Actions</h3>
                     <div className="space-y-4">
-                        <button className="w-full flex items-center p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors group">
+                        <button
+                            onClick={() => navigate('/submit-activity')}
+                            className="w-full flex items-center p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors group"
+                        >
                             <div className="bg-primary-500 p-2 rounded text-white group-hover:scale-110 transition-transform">
                                 <FilePlus size={20} />
                             </div>
@@ -119,7 +122,10 @@ const TeacherDashboard = () => {
                                 <p className="text-xs text-slate-500">Form 48, Events, etc.</p>
                             </div>
                         </button>
-                        <button className="w-full flex items-center p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors group">
+                        <button
+                            onClick={() => navigate('/activities')}
+                            className="w-full flex items-center p-4 bg-slate-50 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors group"
+                        >
                             <div className="bg-secondary-500 p-2 rounded text-white group-hover:scale-110 transition-transform">
                                 <List size={20} />
                             </div>
