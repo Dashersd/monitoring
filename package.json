@@ -7,12 +7,13 @@
     "dev": "concurrently \"npm run client\" \"npm run server\"",
     "client": "vite",
     "server": "npm run dev --prefix backend",
-    "build": "vite build",
+    "build": "prisma generate --schema=./backend/prisma/schema.prisma && vite build",
     "postinstall": "prisma generate --schema=./backend/prisma/schema.prisma",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@prisma/client": "5.10.0",
     "axios": "^1.13.4",
     "clsx": "^2.1.1",
     "framer-motion": "^12.30.0",
@@ -25,7 +26,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
-    "@prisma/client": "5.10.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
