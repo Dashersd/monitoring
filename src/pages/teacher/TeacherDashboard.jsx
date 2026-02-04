@@ -1,9 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../../services/api';
 import StatCard from '../../components/dashboard/StatCard';
 import { Award, Clock, FilePlus, List } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const TeacherDashboard = () => {
+    const [stats, setStats] = useState({
+        totalCredits: 0,
+        pendingSubmissions: 0,
+        approvedActivities: 0,
+        creditTrend: 0,
+        approvedTrend: 0
+    });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                // Determine if we need to use a relative path or rely on the proxy/base URL
+                // The api service instance (api.js) handles baseURL
+                const response = await api.get('/activities/my-stats');
+                if (response.data.status === 'success') {
+                    setStats(response.data.data);
+                }
+            } catch (error) {
+                console.error('Failed to fetch stats:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchStats();
+    }, []);
+
     const data = [
         { name: 'Sep', credits: 4 },
         { name: 'Oct', credits: 3 },
@@ -12,6 +41,15 @@ const TeacherDashboard = () => {
         { name: 'Jan', credits: 6 },
         { name: 'Feb', credits: 4 },
     ];
+
+    const getTrendDisplay = (value, unit = '') => {
+        if (value > 0) return { trend: 'up', trendValue: `+${value} ${unit}` };
+        if (value < 0) return { trend: 'down', trendValue: `${value} ${unit}` };
+        return { trend: 'neutral', trendValue: '--' };
+    };
+
+    const creditTrend = getTrendDisplay(stats.creditTrend, 'Days');
+    const approvedTrend = getTrendDisplay(stats.approvedTrend);
 
     return (
         <div className="space-y-8 animate-fade-in">
@@ -23,26 +61,26 @@ const TeacherDashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatCard
                     title="Total Service Credits"
-                    value="45 Days"
+                    value={`${stats.totalCredits} Days`}
                     icon={Award}
-                    trend="up"
-                    trendValue="+5 Days"
+                    trend={creditTrend.trend}
+                    trendValue={creditTrend.trendValue}
                     color="primary"
                 />
                 <StatCard
                     title="Pending Submissions"
-                    value="2"
+                    value={stats.pendingSubmissions}
                     icon={Clock}
                     trend="neutral"
-                    trendValue=""
+                    trendValue="--"
                     color="warning"
                 />
                 <StatCard
                     title="Approved Activities"
-                    value="12"
+                    value={stats.approvedActivities}
                     icon={List}
-                    trend="up"
-                    trendValue="+2"
+                    trend={approvedTrend.trend}
+                    trendValue={approvedTrend.trendValue}
                     color="secondary"
                 />
             </div>

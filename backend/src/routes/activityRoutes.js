@@ -7,7 +7,8 @@ const {
     updateActivityStatus,
     getDashboardStats,
     getTeacherStats,
-    getReportData
+    getReportData,
+    getMyStats
 } = require('../controllers/activityController');
 const { authenticateToken, authorizeRole } = require('../middleware/authMiddleware');
 const multer = require('multer');
@@ -31,6 +32,7 @@ const upload = multer({
 
 router.get('/all', authenticateToken, authorizeRole(['ADMIN', 'SUPERVISOR']), getAllActivities);
 router.get('/my', authenticateToken, getMyActivities);
+router.get('/my-stats', authenticateToken, getMyStats);
 router.get('/stats', authenticateToken, authorizeRole(['ADMIN', 'SUPERVISOR']), getDashboardStats);
 router.get('/reports', authenticateToken, authorizeRole(['ADMIN', 'SUPERVISOR']), getReportData);
 router.get('/teacher/:id', authenticateToken, authorizeRole(['ADMIN', 'SUPERVISOR']), getTeacherStats);

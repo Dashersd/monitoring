@@ -337,6 +337,85 @@ const getReportData = async (req, res) => {
     }
 };
 
+// Get stats for the logged-in teacher (Dashboard)
+const getMyStats = async (req, res) => {
+    try {
+        const teacherId = req.user.id;
+        const teacherProfile = await prisma.teacherProfile.findUnique({
+            where: { userId: teacherId }
+        });
+
+        if (!teacherProfile) {
+            return res.json({
+                status: 'success',
+                data: {
+                    totalCredits: 0,
+                    pendingSubmissions: 0,
+                    approvedActivities: 0,
+                    creditTrend: 0,
+                    approvedTrend: 0
+                }
+            });
+        }
+
+        const tId = teacherProfile.id;
+        const now = new Date();
+        const firstDayCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        // 1. Total Service Credits (Approved)
+        const totalCreditsAgg = await prisma.activity.aggregate({
+            _sum: { durationHours: true },
+            where: { teacherId: tId, status: 'APPROVED' }
+        });
+        const totalCredits = totalCreditsAgg._sum.durationHours || 0;
+
+        // Credit Trend (Approved this month)
+        const currentMonthCreditsAgg = await prisma.activity.aggregate({
+            _sum: { durationHours: true },
+            where: {
+                teacherId: tId,
+                status: 'APPROVED',
+                updatedAt: { gte: firstDayCurrentMonth }
+            }
+        });
+        const creditTrend = currentMonthCreditsAgg._sum.durationHours || 0;
+
+        // 2. Pending Submissions (Current Count)
+        const pendingSubmissions = await prisma.activity.count({
+            where: { teacherId: tId, status: 'PENDING' }
+        });
+
+        // 3. Approved Activities (Total Count)
+        const approvedActivities = await prisma.activity.count({
+            where: { teacherId: tId, status: 'APPROVED' }
+        });
+
+        // Approved Trend (Approved count this month)
+        const approvedTrend = await prisma.activity.count({
+            where: {
+                teacherId: tId,
+                status: 'APPROVED',
+                updatedAt: { gte: firstDayCurrentMonth }
+            }
+        });
+
+        res.json({
+            status: 'success',
+            data: {
+                totalCredits: Math.round(totalCredits * 100) / 100,
+                pendingSubmissions,
+                approvedActivities,
+                creditTrend: Math.round(creditTrend * 100) / 100,
+                approvedTrend
+            }
+        });
+
+    } catch (error) {
+        console.error("Error fetching my stats:", error);
+        res.status(500).json({ status: 'error', message: 'Failed to fetch dashboard stats' });
+    }
+};
+
 module.exports = {
     submitActivity,
     getMyActivities,
@@ -344,5 +423,6 @@ module.exports = {
     updateActivityStatus,
     getDashboardStats,
     getTeacherStats,
-    getReportData
+    getReportData,
+    getMyStats
 };
